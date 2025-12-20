@@ -1,0 +1,490 @@
+ 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>pH Titration Lab Simulator</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            /* Visual Style */
+            --bg-color: #ffffff;
+            --text-color: #333333;
+            --stand-color: #4a4a4a;
+            --glass-border: #555555;
+            --glass-fill: #f9f9f9;
+            --liquid-acid: #e0f7fa; /* Light Blue for Acid */
+            --liquid-base: #f8bbd0; /* Pinkish for Base (Burette) */
+            --accent-color: #00796b;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 { margin-bottom: 5px; color: #2c3e50; }
+        .subtitle { font-size: 0.9rem; color: #7f8c8d; margin-bottom: 30px; }
+
+        /* --- Main Layout Grid --- */
+        .main-content {
+            display: flex;
+            gap: 40px;
+            width: 100%;
+            max-width: 1200px;
+            justify-content: center;
+            align-items: flex-start;
+            flex-wrap: wrap;
+        }
+
+        /* --- Left: Apparatus & Formulas --- */
+        .lab-panel {
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 380px;
+        }
+
+        .apparatus {
+            position: relative;
+            width: 300px;
+            height: 550px;
+            margin-bottom: 20px;
+        }
+
+        /* Stand */
+        .base {
+            width: 160px; height: 12px; background-color: var(--stand-color);
+            position: absolute; bottom: 0; left: 70px; border-radius: 4px; z-index: 2;
+        }
+        .rod {
+            width: 8px; height: 530px; background-color: var(--stand-color);
+            position: absolute; bottom: 12px; left: 100px;
+        }
+        .clamp {
+            width: 60px; height: 8px; background-color: var(--stand-color);
+            position: absolute; top: 80px; left: 104px;
+        }
+        .clamp-holder {
+            width: 12px; height: 24px; background-color: var(--stand-color);
+            position: absolute; top: 72px; left: 160px;
+        }
+
+        /* Burette */
+        .burette {
+            width: 24px; height: 300px;
+            background-color: var(--glass-fill);
+            border: 2px solid var(--glass-border);
+            position: absolute; top: 40px; left: 154px;
+            border-radius: 2px; overflow: hidden; z-index: 2;
+        }
+        .burette-liquid {
+            width: 100%; height: 100%; background-color: var(--liquid-base);
+            position: absolute; bottom: 0; transition: height 0.5s ease-out;
+        }
+        .burette::after {
+            content: ''; position: absolute; right: 0; top: 0; bottom: 0; width: 8px;
+            background: repeating-linear-gradient(to bottom, var(--glass-border), var(--glass-border) 1px, transparent 1px, transparent 10px);
+            opacity: 0.3;
+        }
+        
+        .stopcock {
+            width: 6px; height: 15px; background-color: var(--glass-border);
+            position: absolute; top: 342px; left: 163px; z-index: 1;
+        }
+        .stopcock-handle {
+            width: 20px; height: 6px; background-color: #333;
+            position: absolute; top: 346px; left: 156px; border-radius: 2px; z-index: 3;
+        }
+
+        /* Beaker (Positioned just below burette, touching base) */
+        .beaker {
+            width: 120px; height: 140px;
+            background-color: var(--glass-fill);
+            border: 2px solid var(--glass-border);
+            border-top: none;
+            position: absolute; 
+            bottom: 12px; /* Sits exactly on the 12px high base */
+            left: 106px; /* Centered under burette */
+            border-radius: 0 0 15px 15px;
+            overflow: hidden; z-index: 3;
+            box-shadow: inset 0 -5px 10px rgba(0,0,0,0.05);
+        }
+        .solution {
+            width: 100%; height: 40%;
+            background-color: var(--liquid-acid);
+            position: absolute; bottom: 0; transition: height 0.5s ease-out;
+        }
+        /* Stir Bar */
+        .stir-bar {
+            width: 25px; height: 6px; background-color: white; border: 1px solid #ccc;
+            position: absolute; bottom: 5px; left: 47px; border-radius: 3px;
+        }
+
+        /* Drop Animation */
+        .drop {
+            width: 8px; height: 8px; background-color: var(--liquid-base); border-radius: 50%;
+            position: absolute; top: 360px; left: 162px; opacity: 0; z-index: 10;
+        }
+        @keyframes drip {
+            0% { top: 360px; opacity: 1; }
+            100% { top: 500px; opacity: 0; }
+        }
+        .drop.animate { animation: drip 0.4s linear; }
+
+        /* --- Formula Box --- */
+        .formula-card {
+            background-color: #f1f8e9;
+            border: 1px solid #c5e1a5;
+            border-radius: 8px;
+            padding: 15px;
+            width: 100%;
+            box-sizing: border-box;
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+        .formula-card h3 {
+            margin: 0 0 10px 0;
+            color: #33691e;
+            font-size: 1rem;
+            text-align: center;
+            border-bottom: 1px dashed #aed581;
+            padding-bottom: 5px;
+        }
+        .formula-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+        .formula-row:last-child { border-bottom: none; }
+        .formula-name { font-weight: bold; color: #558b2f; }
+        .formula-eq { font-family: 'Times New Roman', serif; font-style: italic; color: #333; }
+
+        /* --- Right: Controls & Graph --- */
+        .data-panel {
+            flex: 1;
+            min-width: 450px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* pH Display */
+        .ph-meter-box {
+            background: #2c3e50; color: #2ecc71;
+            font-family: 'Courier New', monospace; font-size: 2.5rem; font-weight: bold;
+            text-align: center; padding: 15px; border-radius: 8px;
+            border: 4px solid #34495e;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        /* Controls */
+        .controls-card {
+            background: #f8f9fa; padding: 20px; border-radius: 8px; border: 1px solid #eee;
+        }
+        .control-row {
+            display: flex; gap: 10px; align-items: center; justify-content: center; margin-bottom: 10px;
+        }
+        input[type="number"] {
+            padding: 10px; border: 1px solid #ccc; border-radius: 6px; width: 80px; font-size: 1rem;
+        }
+        button {
+            padding: 10px 20px; background-color: var(--accent-color); color: white;
+            border: none; border-radius: 6px; cursor: pointer; font-weight: 600;
+            transition: 0.2s;
+        }
+        button:hover { background-color: #004d40; transform: translateY(-2px); }
+        .btn-reset { background-color: #e74c3c; }
+        .btn-reset:hover { background-color: #c0392b; }
+
+        /* Graph Container */
+        .chart-box {
+            background: white; border: 1px solid #eee; padding: 10px; border-radius: 8px;
+            height: 300px;
+        }
+
+        /* Results Table */
+        .results-table {
+            width: 100%; border-collapse: collapse; font-size: 0.95rem;
+        }
+        .results-table th { background-color: var(--accent-color); color: white; padding: 10px; text-align: left; }
+        .results-table td { border-bottom: 1px solid #eee; padding: 10px; color: #555; }
+        .results-table tr:last-child td { border-bottom: none; }
+        .val-highlight { font-weight: bold; color: #d81b60; }
+
+    </style>
+</head>
+<body>
+
+    <h1>Virtual pH Titration Simulator</h1>
+    <div class="subtitle">Weak Acid (Acetic Acid) vs Strong Base (NaOH)</div>
+
+    <div class="main-content">
+        <div class="lab-panel">
+            <div class="apparatus">
+                <div class="base"></div>
+                <div class="rod"></div>
+                <div class="clamp"></div>
+                <div class="clamp-holder"></div>
+
+                <div class="burette">
+                    <div class="burette-liquid" id="buretteLevel"></div>
+                </div>
+                <div class="stopcock"></div>
+                <div class="stopcock-handle"></div>
+
+                <div id="dropZone"></div>
+
+                <div class="beaker">
+                    <div class="solution" id="beakerLevel"></div>
+                    <div class="stir-bar"></div>
+                </div>
+            </div>
+            
+            <div style="text-align: center; color: #777; font-size: 0.9rem; margin-bottom:15px;">
+                Sample: 25mL 0.1M Acetic Acid<br>
+                Titrant: ~0.083M NaOH (Adjusted)
+            </div>
+
+            <div class="formula-card">
+                <h3>Calculation Formulas</h3>
+                
+                <div class="formula-row">
+                    <span class="formula-name">1. Initial pH</span>
+                    <span class="formula-eq">pH = -log(√(Ka × C<sub>acid</sub>))</span>
+                </div>
+                
+                <div class="formula-row">
+                    <span class="formula-name">2. Buffer Region</span>
+                    <span class="formula-eq">pH = pKa + log([Salt] / [Acid])</span>
+                </div>
+                
+                <div class="formula-row">
+                    <span class="formula-name">3. Equivalence</span>
+                    <span class="formula-eq">pOH = -log(√(Kb × C<sub>salt</sub>))</span>
+                </div>
+                
+                <div class="formula-row">
+                    <span class="formula-name">4. Excess Base</span>
+                    <span class="formula-eq">pOH = -log(n<sub>excess</sub> / V<sub>total</sub>)</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="data-panel">
+            <div class="ph-meter-box" id="phDisplay">2.88</div>
+
+            <div class="controls-card">
+                <div class="control-row">
+                    <label>Add NaOH (mL):</label>
+                    <input type="number" id="volInput" value="0.5" step="0.1" min="0.1">
+                    <button onclick="addTitrant()">Add</button>
+                    <button class="btn-reset" onclick="resetSim()">Reset</button>
+                </div>
+                <div style="text-align: center; font-size: 0.9rem; color: #555;">
+                    Total Added: <span id="totalVolDisplay" style="font-weight:bold;">0.00</span> mL
+                </div>
+            </div>
+
+            <div class="chart-box" style="height: auto;">
+                <table class="results-table">
+                    <thead>
+                        <tr>
+                            <th colspan="2">Theoretical Calculations</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Dissociation Constant (Ka)</td>
+                            <td class="val-highlight">1.78 × 10⁻⁵</td>
+                        </tr>
+                        <tr>
+                            <td>pH at Half Neutralization Point</td>
+                            <td class="val-highlight">4.75</td>
+                        </tr>
+                        <tr>
+                            <td>Equivalence Point Volume (Veq)</td>
+                            <td class="val-highlight">30.00 mL</td>
+                        </tr>
+                        <tr>
+                            <td>pH at Equivalence Point</td>
+                            <td class="val-highlight">8.70</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="chart-box">
+                <canvas id="titrationChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+<script>
+    // --- 1. Chemical Constants & Math ---
+    const V_acid_L = 0.025;      // 25 mL
+    const C_acid_M = 0.100;      // 0.1 M
+    // To get Veq = 30mL, we calculate C_base: (0.025 * 0.1) / 0.030 = 0.08333...
+    const C_base_M = (V_acid_L * C_acid_M) / 0.030; 
+    
+    const K_a = 1.78e-5;         // Acetic Acid
+    const K_w = 1.0e-14;
+
+    // --- 2. State Variables ---
+    let total_base_mL = 0;
+    let chartInstance = null;
+
+    // --- 3. Calculation Logic ---
+    function calculatepH(V_base_mL) {
+        const V_base_L = V_base_mL / 1000.0;
+        const n_acid_init = V_acid_L * C_acid_M;
+        const n_base_added = V_base_L * C_base_M;
+        const V_total = V_acid_L + V_base_L;
+        
+        let pH = 7;
+
+        // Region 1: Start
+        if (n_base_added === 0) {
+            pH = -Math.log10(Math.sqrt(K_a * C_acid_M));
+        }
+        // Region 2: Buffer (Before Equivalence)
+        else if (n_base_added < n_acid_init) {
+            const ratio = n_base_added / (n_acid_init - n_base_added);
+            pH = -Math.log10(K_a) + Math.log10(ratio);
+        }
+        // Region 3: Equivalence Point (Hydrolysis)
+        else if (Math.abs(n_base_added - n_acid_init) < 1e-9) {
+            const K_b = K_w / K_a;
+            const C_salt = n_acid_init / V_total;
+            const pOH = -Math.log10(Math.sqrt(K_b * C_salt));
+            pH = 14.0 - pOH;
+        }
+        // Region 4: Excess Base
+        else {
+            const n_OH = n_base_added - n_acid_init;
+            const pOH = -Math.log10(n_OH / V_total);
+            pH = 14.0 - pOH;
+        }
+        return Math.min(14, Math.max(0, pH));
+    }
+
+    // --- 4. Animation & UI Updates ---
+    function animateDrop() {
+        const dropZone = document.getElementById('dropZone');
+        const drop = document.createElement('div');
+        drop.className = 'drop animate';
+        dropZone.appendChild(drop);
+        setTimeout(() => drop.remove(), 400);
+    }
+
+    function updateVisuals(addedVol) {
+        // Visual Scaling: 50mL Burette capacity
+        const buretteMax = 50;
+        const pctFull = ((buretteMax - total_base_mL) / buretteMax) * 100;
+        document.getElementById('buretteLevel').style.height = `${Math.max(0, pctFull)}%`;
+
+        // Beaker fills up visually (starts at 40%, goes to 90%)
+        const beakerPct = 40 + (total_base_mL * 0.5);
+        document.getElementById('beakerLevel').style.height = `${Math.min(90, beakerPct)}%`;
+    }
+
+    function updateChart(vol, ph) {
+        chartInstance.data.labels.push(vol.toFixed(1));
+        chartInstance.data.datasets[0].data.push(ph);
+        chartInstance.update();
+    }
+
+    // --- 5. User Interaction ---
+    function addTitrant() {
+        const volInput = document.getElementById('volInput');
+        const volToAdd = parseFloat(volInput.value);
+
+        if (isNaN(volToAdd) || volToAdd <= 0) return;
+        if (total_base_mL + volToAdd > 50) {
+            alert("Burette Empty / Beaker Full");
+            return;
+        }
+
+        // Animate multiple drops based on volume
+        let drops = Math.min(10, Math.ceil(volToAdd * 3));
+        let count = 0;
+        
+        const interval = setInterval(() => {
+            animateDrop();
+            count++;
+            if(count >= drops) {
+                clearInterval(interval);
+                // Finalize State
+                total_base_mL += volToAdd;
+                const currentPH = calculatepH(total_base_mL);
+                
+                // Update UI
+                document.getElementById('phDisplay').textContent = currentPH.toFixed(2);
+                document.getElementById('totalVolDisplay').textContent = total_base_mL.toFixed(2);
+                
+                updateVisuals(volToAdd);
+                updateChart(total_base_mL, currentPH);
+            }
+        }, 100); // Speed of drops
+    }
+
+    function resetSim() {
+        total_base_mL = 0;
+        document.getElementById('phDisplay').textContent = calculatepH(0).toFixed(2);
+        document.getElementById('totalVolDisplay').textContent = "0.00";
+        document.getElementById('buretteLevel').style.height = "100%";
+        document.getElementById('beakerLevel').style.height = "40%";
+        
+        // Reset Chart
+        chartInstance.data.labels = [0];
+        chartInstance.data.datasets[0].data = [calculatepH(0)];
+        chartInstance.update();
+    }
+
+    // --- 6. Init ---
+    window.onload = function() {
+        // Init Chart
+        const ctx = document.getElementById('titrationChart').getContext('2d');
+        chartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [0],
+                datasets: [{
+                    label: 'pH Curve',
+                    data: [calculatepH(0)],
+                    borderColor: '#00796b',
+                    backgroundColor: 'rgba(0, 121, 107, 0.1)',
+                    borderWidth: 2,
+                    pointRadius: 2,
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { title: { display: true, text: 'Volume NaOH (mL)' } },
+                    y: { title: { display: true, text: 'pH' }, min: 0, max: 14 }
+                }
+            }
+        });
+    };
+</script>
+
+</body>
+</html>
+```

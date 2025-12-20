@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EDTA Lab Simulator (Flat Design)</title>
+    
+    <style>
+        /* --- 1. General Layout --- */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f4f6f8;
+            color: #333;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .main-content {
+            display: flex;
+            gap: 30px;
+            max-width: 1200px;
+            width: 100%;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .lab-container {
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            padding: 40px;
+            text-align: center;
+            flex: 2;
+            min-width: 600px;
+        }
+
+        h1 { color: #00796b; margin-bottom: 30px; }
+
+        /* --- Reagent Boxes --- */
+        .reagent-boxes {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+
+        .reagent-box {
+            background-color: #546e7a;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.2s;
+            user-select: none;
+            font-size: 0.9em;
+        }
+
+        .reagent-box:hover { background-color: #37474f; transform: translateY(-2px); }
+
+        /* --- APPARATUS SECTION (The Flat Design) --- */
+        .apparatus-container {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            margin-bottom: 50px;
+            height: 550px; 
+            position: relative;
+            width: 100%;
+        }
+
+        /* 1. The Stand */
+        .stand-base {
+            position: absolute;
+            bottom: 0;
+            left: 25%;
+            width: 120px;
+            height: 12px;
+            background-color: #333; /* Dark Grey */
+            border-radius: 4px;
+            z-index: 2;
+        }
+
+        .stand-rod {
+            position: absolute;
+            bottom: 12px;
+            left: 28%; 
+            width: 10px;
+            height: 530px;
+            background-color: #333;
+            z-index: 1;
+        }
+
+        .stand-clamp {
+            position: absolute;
+            top: 80px; /* Positioned to hold the top of burette */
+            left: 28%;
+            width: 90px; 
+            height: 10px;
+            background-color: #333;
+            z-index: 1;
+        }
+
+        /* 2. The Burette - Shortened & Lifted */
+        .burette-group {
+            position: absolute;
+            top: 40px; /* Moves the whole burette up */
+            left: calc(28% + 80px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 5;
+        }
+
+        .burette-body {
+            width: 36px;
+            height: 300px; /* Shorter height to prevent overlap */
+            border: 2px solid #333;
+            background-color: #fff;
+            position: relative;
+            border-radius: 2px;
+        }
+
+        .burette-liquid {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 0%;
+            background-color: #64b5f6; /* EDTA Blue */
+            transition: height 0.5s ease-out;
+            z-index: 1;
+        }
+
+        /* Tick Marks */
+        .burette-ticks {
+            position: absolute;
+            top: 10px;
+            right: 0;
+            width: 100%;
+            height: 280px; /* Matches body height minus padding */
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+        .tick { width: 8px; height: 1px; background-color: #555; }
+        .tick.long { width: 15px; }
+
+        /* Stopcock */
+        .stopcock {
+            width: 18px;
+            height: 12px;
+            background-color: #333;
+            margin-top: -2px;
+            position: relative;
+            z-index: 6;
+        }
+        .stopcock::after {
+            content: '';
+            position: absolute;
+            top: 100%; left: 50%; transform: translateX(-50%);
+            width: 4px; height: 8px; background-color: #333;
+        }
+
+        /* 3. The Beaker */
+        .beaker-container {
+            position: absolute;
+            bottom: 12px;
+            left: calc(28% + 30px);
+            z-index: 10;
+        }
+
+        .beaker {
+            width: 140px;
+            height: 150px; /* Slightly shorter beaker */
+            border: 2px solid #333;
+            border-top: none;
+            border-radius: 0 0 20px 20px;
+            position: relative;
+            overflow: hidden;
+            background-color: rgba(255,255,255,0.95);
+        }
+
+        .beaker-liquid {
+            width: 100%;
+            height: 0%;
+            background-color: transparent;
+            position: absolute;
+            bottom: 0;
+            transition: height 0.1s linear, background-color 0.5s ease-out;
+        }
+
+        /* 4. Drop Animation - Adjusted Start/End points */
+        .drop {
+            position: absolute;
+            top: 365px; /* Directly below the shortened burette tip */
+            left: calc(28% + 98px);
+            transform: translateX(-50%);
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background-color: #64b5f6;
+            opacity: 0;
+            z-index: 8;
+        }
+        .drop.animate { animation: fall 0.3s linear forwards; }
+        @keyframes fall { 
+            0% { transform: translate(-50%, 0); opacity: 1; } 
+            100% { transform: translate(-50%, 120px); opacity: 0; } /* Falls into beaker */
+        }
+
+        /* --- Inputs & UI --- */
+        .mode-selection { margin-bottom: 20px; }
+        .mode-button { background-color: #e0e0e0; color: #333; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; margin: 0 5px; font-weight: bold; }
+        .mode-button.active { background-color: #00796b; color: white; }
+        
+        .input-section { margin-top: 20px; padding: 20px; background: #fafafa; border-radius: 8px; text-align: left; border: 1px solid #eee; }
+        .input-section input { padding: 8px; width: 120px; margin: 5px 0; border: 1px solid #ccc; border-radius: 4px; }
+        .input-section button { background-color: #0277bd; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; margin-top: 10px; }
+        .input-section button:hover { background-color: #01579b; }
+        
+        .hidden { display: none !important; }
+        
+        .results-section { margin-top: 20px; padding: 15px; background: #e0f2f1; border-radius: 4px; text-align: left; border-left: 4px solid #00796b; }
+        
+        .instruction-box { flex: 1; background: #fff3e0; padding: 20px; border-radius: 8px; text-align: left; height: fit-content; border: 1px solid #ffe0b2; }
+        .instruction-box h2 { margin-top: 0; color: #e65100; }
+
+        #notification-area { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 10px 20px; border-radius: 4px; display: none; z-index: 100; }
+        
+        #readings-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        #readings-table th, #readings-table td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+        #readings-table th { background: #eee; }
+    </style>
+</head>
+<body>
+    <div class="main-content">
+        <div id="notification-area"></div>
+        <div class="lab-container">
+            <h1>Determination of Hardness of Water (EDTA)</h1>
+
+            <div class="mode-selection">
+                <button id="mode-standardization" class="mode-button active">Part I: Standardization</button>
+                <button id="mode-hardness" class="mode-button">Part II: Hardness</button>
+            </div>
+
+            <div class="reagent-boxes">
+                <div class="reagent-box" id="edta-reagent">EDTA (Burette)</div>
+                <div class="reagent-box" id="znso4-reagent">ZnSO₄</div>
+                <div class="reagent-box" id="water-sample-reagent">Water Sample</div>
+                <div class="reagent-box" id="buffer-reagent">Buffer (pH 10)</div>
+                <div class="reagent-box" id="ebt-reagent">EBT Indicator</div>
+            </div>
+
+            <div class="apparatus-container">
+                <div class="stand-base"></div>
+                <div class="stand-rod"></div>
+                <div class="stand-clamp"></div>
+
+                <div class="burette-group">
+                    <div class="burette-body">
+                        <div class="burette-liquid" id="burette-liquid"></div>
+                        <div class="burette-ticks">
+                            <div class="tick long"></div><div class="tick"></div><div class="tick"></div><div class="tick"></div>
+                            <div class="tick long"></div><div class="tick"></div><div class="tick"></div><div class="tick"></div>
+                            <div class="tick long"></div><div class="tick"></div><div class="tick"></div><div class="tick"></div>
+                            <div class="tick long"></div><div class="tick"></div><div class="tick"></div><div class="tick"></div>
+                            <div class="tick long"></div><div class="tick"></div><div class="tick"></div>
+                        </div>
+                    </div>
+                    <div class="stopcock"></div>
+                </div>
+
+                <div id="titration-drop" class="drop"></div>
+
+                <div class="beaker-container">
+                    <div class="beaker">
+                        <div class="beaker-liquid" id="beaker-liquid"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="input-section">
+                <div id="standardization-inputs" class="mode-inputs">
+                    <h3>Standardization of EDTA</h3>
+                    <label>ZnSO₄ Molarity (M):</label> <input type="number" id="znso4-molarity" value="0.01" step="0.001"><br>
+                    <label>ZnSO₄ Volume (mL):</label> <input type="number" id="znso4-volume" value="10" step="0.1"><br>
+                    <label>Titrated Volume:</label> <input type="number" id="edta-titrated-volume-standardization" placeholder="0.0" step="0.1"><br>
+                    <button id="titrate-standardization-button">Titrate</button>
+                    <button id="calculate-m2">Calculate Molarity</button>
+                    <p>Molarity (M2): <span id="edta-molarity-display">---</span> M</p>
+                </div>
+
+                <div id="hardness-inputs" class="mode-inputs hidden">
+                    <h3>Water Hardness</h3>
+                    <p>M2: <span id="edta-molarity-display-hardness">---</span> M</p>
+                    <button id="titrate-unboiled-sample-button">Titrate Unboiled</button>
+                    
+                    <div class="readings-section">
+                        <table id="readings-table">
+                            <thead><tr><th>Trial</th><th>Volume (mL)</th></tr></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+
+                    <button id="titrate-boiled-sample-button">Titrate Boiled</button>
+                    <br><br>
+                    <label>Sample Vol (mL):</label> <input type="number" id="sample-volume-hardness" value="10"><br>
+                    <label>Vol (Unboiled):</label> <input type="number" id="edta-titrated-volume-unboiled"><br>
+                    <label>Vol (Boiled):</label> <input type="number" id="edta-titrated-volume-boiled"><br>
+                    <button id="calculate-hardness">Calculate Results</button>
+                </div>
+
+                <button id="reset-button" style="background-color:#d32f2f; margin-top:20px;">Reset Simulation</button>
+            </div>
+
+            <div class="results-section">
+                <h3>Results</h3>
+                <p>Total: <span id="total-hardness"></span> ppm</p>
+                <p>Permanent: <span id="permanent-hardness"></span> ppm</p>
+                <p>Temporary: <span id="temporary-hardness"></span> ppm</p>
+            </div>
+        </div>
+
+        <div class="instruction-box">
+            <h2>Instructions</h2>
+            <p id="current-instruction">Select a mode to begin.</p>
+        </div>
+    </div>
+
+    <script>
+        /* --- JAVASCRIPT LOGIC --- */
+        
+        const buretteLiquid = document.getElementById("burette-liquid");
+        const beakerLiquid = document.getElementById("beaker-liquid");
+        const titrationDrop = document.getElementById("titration-drop");
+
+        const edtaReagent = document.getElementById("edta-reagent");
+        const znso4Reagent = document.getElementById("znso4-reagent");
+        const waterSampleReagent = document.getElementById("water-sample-reagent");
+        const bufferReagent = document.getElementById("buffer-reagent");
+        const ebtReagent = document.getElementById("ebt-reagent");
+
+        const modeStandardizationBtn = document.getElementById("mode-standardization");
+        const modeHardnessBtn = document.getElementById("mode-hardness");
+
+        const standardizationInputsDiv = document.getElementById("standardization-inputs");
+        const hardnessInputsDiv = document.getElementById("hardness-inputs");
+
+        const znso4MolarityInput = document.getElementById("znso4-molarity");
+        const znso4VolumeInput = document.getElementById("znso4-volume");
+        const edtaTitratedVolumeStandardizationInput = document.getElementById("edta-titrated-volume-standardization");
+        const calculateM2Button = document.getElementById("calculate-m2");
+        const edtaMolarityDisplay = document.getElementById("edta-molarity-display");
+        const titrateStandardizationButton = document.getElementById("titrate-standardization-button");
+
+        const edtaMolarityDisplayHardness = document.getElementById("edta-molarity-display-hardness");
+        const sampleVolumeHardnessInput = document.getElementById("sample-volume-hardness");
+        const edtaTitratedVolumeUnboiledInput = document.getElementById("edta-titrated-volume-unboiled");
+        const edtaTitratedVolumeBoiledInput = document.getElementById("edta-titrated-volume-boiled");
+        const calculateHardnessButton = document.getElementById("calculate-hardness");
+        const titrateUnboiledSampleButton = document.getElementById("titrate-unboiled-sample-button");
+        const titrateBoiledSampleButton = document.getElementById("titrate-boiled-sample-button");
+        const readingsTableBody = document.querySelector("#readings-table tbody");
+
+        const resetButton = document.getElementById("reset-button");
+        const totalHardnessSpan = document.getElementById("total-hardness");
+        const permanentHardnessSpan = document.getElementById("permanent-hardness");
+        const temporaryHardnessSpan = document.getElementById("temporary-hardness");
+        const currentInstructionDisplay = document.getElementById("current-instruction");
+        const notificationArea = document.getElementById("notification-area");
+
+        let currentMode = "standardization";
+        let titrationActive = false;
+        let edtaAddedVolume = 0.0;
+        let endpointReached = false;
+        let edtaMolarityM2 = 0.0;
+        let currentTitrationType = "standardization";
+        let beakerHasSample = false;
+        let beakerHasBuffer = false;
+        let beakerHasEbt = false;
+        let hardnessTrialCount = 0;
+        let titrationTimer = null;
+
+        const SIMULATED_ENDPOINT_VOLUME = {
+            standardization: 8.5,
+            hardness_unboiled: 7.2,
+            hardness_boiled: 4.5
+        };
+
+        function showNotification(message, isError = false) {
+            notificationArea.textContent = message;
+            notificationArea.style.display = 'block';
+            notificationArea.style.backgroundColor = isError ? '#f44336' : '#4caf50';
+            setTimeout(() => { notificationArea.style.display = 'none'; }, 3000);
+        }
+
+        function updateInstructions(message) {
+            currentInstructionDisplay.textContent = message;
+        }
+
+        function updateModeDisplay() {
+            if (titrationTimer) { clearTimeout(titrationTimer); titrationActive = false; }
+            if (currentMode === "standardization") {
+                standardizationInputsDiv.classList.remove("hidden");
+                hardnessInputsDiv.classList.add("hidden");
+                modeStandardizationBtn.classList.add("active");
+                modeHardnessBtn.classList.remove("active");
+                updateInstructions("Standardization Mode: Add ZnSO₄ to the beaker.");
+            } else {
+                standardizationInputsDiv.classList.add("hidden");
+                hardnessInputsDiv.classList.remove("hidden");
+                modeStandardizationBtn.classList.remove("active");
+                modeHardnessBtn.classList.add("active");
+                updateInstructions("Hardness Mode: Add Water Sample to the beaker.");
+                edtaMolarityDisplayHardness.textContent = edtaMolarityM2 ? edtaMolarityM2.toFixed(4) : "N/A";
+            }
+            resetSimulation(false);
+        }
+
+        function resetSimulation(clearM2 = true) {
+            titrationActive = false; edtaAddedVolume = 0.0; endpointReached = false;
+            beakerHasSample = false; beakerHasBuffer = false; beakerHasEbt = false; hardnessTrialCount = 0;
+            if (titrationTimer) { clearTimeout(titrationTimer); titrationTimer = null; }
+
+            buretteLiquid.style.height = "0%";
+            beakerLiquid.style.height = "0%";
+            beakerLiquid.style.backgroundColor = "transparent";
+            titrationDrop.classList.remove('animate');
+
+            totalHardnessSpan.textContent = ""; permanentHardnessSpan.textContent = ""; temporaryHardnessSpan.textContent = "";
+            
+            if (currentMode === "standardization") {
+                if (clearM2) edtaMolarityDisplay.textContent = "";
+                edtaTitratedVolumeStandardizationInput.value = "0.0";
+                updateInstructions("Standardization Mode: Add ZnSO₄ to the beaker.");
+            } else {
+                readingsTableBody.innerHTML = "";
+                edtaTitratedVolumeUnboiledInput.value = "";
+                edtaTitratedVolumeBoiledInput.value = "";
+                updateInstructions("Hardness Mode: Add Water Sample to the beaker.");
+            }
+            if (clearM2) edtaMolarityM2 = 0.0;
+            showNotification("Simulation reset!");
+        }
+
+        function clearBeakerState() {
+            beakerHasSample = false; beakerHasBuffer = false; beakerHasEbt = false;
+            beakerLiquid.style.height = "0%"; beakerLiquid.style.backgroundColor = "transparent";
+        }
+
+        function fillBuretteWithEdta() {
+            buretteLiquid.style.height = "90%";
+            updateInstructions("Burette filled with EDTA. Now prepare the beaker.");
+        }
+
+        function addZnso4ToBeaker() {
+            if (currentMode === "standardization") {
+                clearBeakerState();
+                beakerLiquid.style.height = "20%"; beakerLiquid.style.backgroundColor = "#e0f2f7";
+                beakerHasSample = true;
+                updateInstructions("ZnSO₄ added. Now add Buffer Solution.");
+            } else { showNotification("ZnSO4 is only used in Standardization mode.", true); }
+        }
+
+        function addWaterSampleToBeaker() {
+            if (currentMode === "hardness") {
+                clearBeakerState();
+                beakerLiquid.style.height = "20%"; beakerLiquid.style.backgroundColor = "#e0f2f7";
+                beakerHasSample = true;
+                updateInstructions("Water Sample added. Now add Buffer Solution.");
+            } else { showNotification("Water Sample is only used in Hardness mode.", true); }
+        }
+
+        function addBufferToBeaker() {
+            if (!beakerHasSample) { showNotification("Please add a sample first!", true); return; }
+            let currentHeight = parseFloat(beakerLiquid.style.height.replace('%', ''));
+            beakerLiquid.style.height = `${Math.min(currentHeight + 10, 70)}%`;
+            beakerHasBuffer = true;
+            updateInstructions("Buffer Solution added. Now add EBT Indicator.");
+        }
+
+        function addEbtToBeaker() {
+            if (!beakerHasBuffer) { showNotification("Please add Buffer first!", true); return; }
+            let currentHeight = parseFloat(beakerLiquid.style.height.replace('%', ''));
+            beakerLiquid.style.height = `${Math.min(currentHeight + 5, 70)}%`;
+            beakerLiquid.style.backgroundColor = "#dc143c"; // Wine Red
+            beakerHasEbt = true;
+            updateInstructions("EBT Indicator added. Solution is wine red. Start titration!");
+        }
+
+        function triggerDropAnimation() {
+            titrationDrop.style.opacity = 0; titrationDrop.classList.remove('animate');
+            void titrationDrop.offsetWidth; titrationDrop.classList.add('animate');
+        }
+
+        function addReadingToTable(volume) {
+            hardnessTrialCount++;
+            const newRow = document.createElement("tr");
+            newRow.innerHTML = `<td>${hardnessTrialCount}</td><td>${volume.toFixed(1)}</td>`;
+            readingsTableBody.appendChild(newRow);
+        }
+
+        function getColorForTitration(currentVolume, targetVolume) {
+            if (currentVolume < targetVolume * 0.8) return "#dc143c"; 
+            else if (currentVolume < targetVolume) return "#8a2be2"; 
+            else return "#87ceeb";
+        }
+
+        function titrateStep() {
+            if (!titrationActive) return;
+            
+            // Check if user is clicking "Titrate" after endpoint reached
+            if (endpointReached) {
+                titrationActive = false;
+                return;
+            }
+
+            let h = parseFloat(buretteLiquid.style.height.replace('%', ''));
+            if (h <= 5) { showNotification("Burette is empty!", true); titrationActive = false; return; }
+
+            // Calculate next volume
+            const dropVolume = 0.1;
+            let nextVolume = edtaAddedVolume + dropVolume;
+            const targetVolume = SIMULATED_ENDPOINT_VOLUME[currentTitrationType];
+
+            // 1. IMMEDIATE STOP CHECK
+            // If the next drop exceeds or equals target, snap to target and stop.
+            if (nextVolume >= targetVolume) {
+                // Force volume to be exactly the endpoint
+                edtaAddedVolume = targetVolume;
+                
+                // Update visuals for the final state
+                triggerDropAnimation();
+                buretteLiquid.style.height = `${h - 0.5}%`; // Visual decrement
+                let bh = parseFloat(beakerLiquid.style.height.replace('%', ''));
+                beakerLiquid.style.height = `${Math.min(bh + 0.25, 70)}%`;
+                
+                // Force final color
+                beakerLiquid.style.backgroundColor = "#87ceeb"; // Blue endpoint
+                
+                // STOP LOGIC
+                endpointReached = true;
+                titrationActive = false;
+                clearTimeout(titrationTimer);
+                
+                showNotification(`Endpoint reached! Volume: ${edtaAddedVolume.toFixed(1)} mL`);
+                
+                // Update Inputs based on mode
+                if (currentTitrationType === "standardization") {
+                    edtaTitratedVolumeStandardizationInput.value = edtaAddedVolume.toFixed(1);
+                    updateInstructions(`Endpoint Reached. Volume: ${edtaAddedVolume.toFixed(1)} mL. Calculate M2.`);
+                } else if (currentTitrationType === "hardness_unboiled") {
+                    addReadingToTable(edtaAddedVolume);
+                    updateInstructions(`Trial Complete. Volume: ${edtaAddedVolume.toFixed(1)} mL.`);
+                } else if (currentTitrationType === "hardness_boiled") {
+                    edtaTitratedVolumeBoiledInput.value = edtaAddedVolume.toFixed(1);
+                    updateInstructions(`Boiled Sample Titration Complete.`);
+                }
+                return; // EXIT FUNCTION IMMEDIATELY
+            }
+
+            // Normal Step
+            triggerDropAnimation();
+            buretteLiquid.style.height = `${h - 0.5}%`;
+            let bh = parseFloat(beakerLiquid.style.height.replace('%', ''));
+            beakerLiquid.style.height = `${Math.min(bh + 0.25, 70)}%`;
+            
+            edtaAddedVolume = nextVolume;
+            beakerLiquid.style.backgroundColor = getColorForTitration(edtaAddedVolume, targetVolume);
+
+            titrationTimer = setTimeout(titrateStep, 100);
+        }
+
+        function startTitration(titrationType) {
+            // 2. CHECK IF ALREADY DONE
+            if (endpointReached) {
+                showNotification("Titration complete. Please reset to try again.", true);
+                return;
+            }
+
+            if (buretteLiquid.style.height === "0%") { showNotification("Fill burette first!", true); return; }
+            if (titrationType.startsWith("hardness_")) {
+                // If it's the start of a new trial, reset endpoint flag just in case (though normally resetSimulation handles this)
+                // But if we are in the middle of a titration, we don't want to reset.
+                // The issue: user clicks "Titrate Unboiled" -> finishes. Clicks again.
+                // We handled "clicks again" with the endpointReached check above.
+                
+                // If this is the *first* click:
+                if (edtaAddedVolume === 0.0) {
+                    clearBeakerState(); addWaterSampleToBeaker(); 
+                    setTimeout(addBufferToBeaker, 100); setTimeout(addEbtToBeaker, 200);
+                    setTimeout(() => runTitrationSteps(titrationType), 300);
+                } else {
+                    // Continuing a paused titration
+                    runTitrationSteps(titrationType);
+                }
+            } else { 
+                if (!beakerHasEbt) { showNotification("Prepare beaker first!", true); return; }
+                runTitrationSteps(titrationType);
+            }
+        }
+
+        function runTitrationSteps(titrationType) {
+            currentTitrationType = titrationType; 
+            titrationActive = true; 
+            // Do NOT reset endpointReached here, or it defeats the purpose of stopping.
+            updateInstructions(`Titrating...`); 
+            titrateStep();
+        }
+
+        function calculateEdtaMolarityM2() {
+            const m1 = parseFloat(znso4MolarityInput.value); const v1 = parseFloat(znso4VolumeInput.value); const v2 = parseFloat(edtaTitratedVolumeStandardizationInput.value);
+            if (v2 === 0) return;
+            edtaMolarityM2 = (m1 * v1) / v2;
+            edtaMolarityDisplay.textContent = edtaMolarityM2.toFixed(4);
+            edtaMolarityDisplayHardness.textContent = edtaMolarityM2.toFixed(4);
+            showNotification(`M2 calculated: ${edtaMolarityM2.toFixed(4)} M`);
+        }
+
+        function calculateWaterHardness() {
+            if (edtaMolarityM2 === 0) { showNotification("Standardize first!", true); return; }
+            const sv = parseFloat(sampleVolumeHardnessInput.value); const vUb = parseFloat(edtaTitratedVolumeUnboiledInput.value); const vB = parseFloat(edtaTitratedVolumeBoiledInput.value);
+            if (sv === 0) return;
+            const total = (edtaMolarityM2 * vUb * 100.09 * 1000) / sv;
+            const perm = (edtaMolarityM2 * vB * 100.09 * 1000) / sv;
+            totalHardnessSpan.textContent = total.toFixed(2);
+            permanentHardnessSpan.textContent = perm.toFixed(2);
+            temporaryHardnessSpan.textContent = Math.max(0, total - perm).toFixed(2);
+            showNotification("Hardness calculated!");
+        }
+
+        edtaReagent.onclick = fillBuretteWithEdta;
+        znso4Reagent.onclick = addZnso4ToBeaker;
+        waterSampleReagent.onclick = addWaterSampleToBeaker;
+        bufferReagent.onclick = addBufferToBeaker;
+        ebtReagent.onclick = addEbtToBeaker;
+
+        modeStandardizationBtn.onclick = () => setMode("standardization");
+        modeHardnessBtn.onclick = () => setMode("hardness");
+        calculateM2Button.onclick = calculateEdtaMolarityM2;
+        calculateHardnessButton.onclick = calculateWaterHardness;
+        
+        titrateStandardizationButton.onclick = () => startTitration("standardization");
+        titrateUnboiledSampleButton.onclick = () => startTitration("hardness_unboiled");
+        titrateBoiledSampleButton.onclick = () => startTitration("hardness_boiled");
+        resetButton.onclick = () => resetSimulation(true);
+
+        function setMode(mode) { currentMode = mode; updateModeDisplay(); }
+        setMode("standardization");
+    </script>
+</body>
+</html>

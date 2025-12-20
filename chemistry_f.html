@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chemistry Virtual Laboratory | Student Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* ================= THEME & BASICS ================= */
+        :root {
+            --primary-neon: #00d5ff;
+            --secondary-neon: #008cff;
+            --glass-bg: rgba(0, 25, 50, 0.65);
+            --glass-border: rgba(0, 180, 255, 0.3);
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Poppins', sans-serif;
+            background: radial-gradient(circle at top, #08121f, #02060d, #000000);
+            color: #e9f3ff;
+            height: 100vh;
+            overflow: hidden; 
+        }
+
+        /* ================= LOGIN SCREEN ================= */
+        #login-screen {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at center, #0d1f33, #000000);
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            transition: opacity 0.5s ease;
+        }
+
+        .login-box {
+            width: 350px;
+            padding: 40px;
+            background: rgba(0, 20, 40, 0.8);
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            border: 2px solid var(--glass-border);
+            box-shadow: 0 0 30px rgba(0, 213, 255, 0.2);
+            text-align: center;
+        }
+
+        .login-box h2 {
+            color: var(--primary-neon);
+            margin-bottom: 30px;
+            text-shadow: 0 0 10px var(--secondary-neon);
+        }
+
+        .input-group { margin-bottom: 20px; text-align: left; }
+        .input-group label { font-size: 14px; color: #8fdeff; margin-left: 5px; }
+        
+        .input-group input {
+            width: 100%; padding: 12px; margin-top: 5px;
+            border-radius: 8px; border: 1px solid #1fa0ff;
+            background: rgba(255, 255, 255, 0.05); color: white;
+            font-size: 16px; box-sizing: border-box;
+        }
+
+        .login-btn {
+            width: 100%; padding: 12px; margin-top: 10px;
+            background: linear-gradient(90deg, var(--secondary-neon), var(--primary-neon));
+            border: none; border-radius: 8px; color: white;
+            font-weight: bold; font-size: 18px; cursor: pointer; transition: 0.3s;
+        }
+        .login-btn:hover { box-shadow: 0 0 20px var(--primary-neon); transform: scale(1.02); }
+
+        .error-msg { color: #ff4444; font-size: 13px; margin-top: 10px; display: none; }
+
+        /* ================= DASHBOARD ================= */
+        #dashboard {
+            display: none; 
+            height: 100vh;
+            flex-direction: column; 
+            align-items: center; 
+            padding-top: 40px;
+            overflow-y: auto;
+            padding-bottom: 60px;
+        }
+
+        .header-bar { 
+            text-align: center; 
+            margin-bottom: 30px; 
+            padding: 0 20px;
+        }
+        .header-bar h1 { 
+            font-size: 36px; 
+            color: var(--primary-neon); 
+            text-shadow: 0 0 20px var(--secondary-neon); 
+            margin: 0; 
+        }
+        .header-bar p { 
+            color: #8fdeff; 
+            font-size: 16px; 
+            margin-top: 10px; 
+        }
+
+        .projects-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 25px;
+            width: 90%;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .project-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            padding: 25px;
+            border-radius: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.4s;
+            min-height: 220px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .project-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 0 30px rgba(0, 213, 255, 0.4);
+            border-color: var(--primary-neon);
+        }
+
+        .card-icon { 
+            font-size: 40px; 
+            margin-bottom: 15px; 
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .project-card h3 { 
+            color: #fff; 
+            margin: 10px 0; 
+            font-size: 22px; 
+        }
+        .project-card p { 
+            font-size: 14px; 
+            color: #aaccff; 
+            line-height: 1.5; 
+            flex-grow: 1;
+        }
+
+        .btn-launch {
+            display: inline-block; 
+            margin-top: 15px; 
+            padding: 10px 20px;
+            border: 1px solid var(--primary-neon); 
+            border-radius: 50px;
+            color: var(--primary-neon); 
+            text-decoration: none; 
+            font-size: 14px; 
+            transition: 0.3s;
+            font-weight: 600;
+        }
+        .project-card:hover .btn-launch { 
+            background: var(--primary-neon); 
+            color: black; 
+            box-shadow: 0 0 15px var(--primary-neon);
+        }
+
+        /* ================= MODAL / POPUP ================= */
+        #simulator-modal {
+            display: none; 
+            position: fixed; 
+            top: 0; left: 0; 
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85); 
+            backdrop-filter: blur(5px);
+            z-index: 2000; 
+            justify-content: center; 
+            align-items: center;
+        }
+
+        .modal-content {
+            width: 95%; 
+            height: 90%; 
+            background: #000;
+            border: 2px solid var(--primary-neon); 
+            border-radius: 15px;
+            position: relative; 
+            box-shadow: 0 0 50px rgba(0, 213, 255, 0.3); 
+            overflow: hidden;
+        }
+
+        iframe { 
+            width: 100%; 
+            height: 100%; 
+            border: none; 
+        }
+
+        .close-btn {
+            position: absolute; 
+            top: 15px; 
+            right: 20px; 
+            font-size: 30px;
+            color: white; 
+            cursor: pointer; 
+            z-index: 2001;
+            background: rgba(0,0,0,0.5); 
+            border-radius: 50%;
+            width: 40px; 
+            height: 40px; 
+            line-height: 40px; 
+            text-align: center; 
+            transition: 0.3s;
+        }
+        .close-btn:hover { 
+            background: red; 
+            transform: rotate(90deg); 
+        }
+
+        .logout-btn {
+            position: fixed; 
+            top: 20px; 
+            right: 20px;
+            background: rgba(255, 50, 50, 0.2); 
+            border: 1px solid #ff4444;
+            color: #ffaaaa; 
+            padding: 10px 20px; 
+            border-radius: 8px; 
+            cursor: pointer;
+            z-index: 100;
+            font-weight: 600;
+        }
+        .logout-btn:hover { 
+            background: rgba(255, 50, 50, 0.5); 
+            color: white; 
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. LOGIN SCREEN -->
+    <div id="login-screen">
+        <div class="login-box">
+            <h2>⚗️ Chemistry Lab Access</h2>
+            <div class="input-group">
+                <label>Student ID</label>
+                <input type="text" id="userid" placeholder="Enter: admin">
+            </div>
+            <div class="input-group">
+                <label>Password</label>
+                <input type="password" id="password" placeholder="Enter: chemistry">
+            </div>
+            <button class="login-btn" onclick="attemptLogin()">ENTER LAB</button>
+            <p class="error-msg" id="error-msg">❌ Invalid ID or Password!</p>
+        </div>
+    </div>
+
+    <!-- 2. DASHBOARD -->
+    <div id="dashboard">
+        <button class="logout-btn" onclick="logout()">Logout</button>
+
+        <div class="header-bar">
+            <h1>Chemistry Virtual Laboratory</h1>
+            <p>Select an Experiment from the Virtual Lab</p>
+        </div>
+
+        <div class="projects-container">
+                        <!-- Experiment 1: Safety -->
+           <div class="project-card" onclick="openSimulator('safty_in_eng_chemisrty_lab')">
+                <div class="card-icon">⚠️</div>
+                <h3>Lab Safety Guide</h3>
+                <p>Interactive safety guidelines, rules, and quiz for chemistry laboratory practices.</p>
+                <span class="btn-launch">Launch Experiment</span>
+            </div>
+
+             <!-- Experiment 2: EDTA -->
+            <div class="project-card" onclick="openSimulator('EDTA_chem_LAB_F')">
+                <div class="card-icon">💧</div>
+                <h3>Water Hardness (EDTA)</h3>
+                <p>Determination of total, permanent and temporary hardness of water using EDTA titration.</p>
+                <span class="btn-launch">Launch Experiment</span>
+            </div>
+
+            
+
+             <!-- Experiment 3: Alkalinity -->
+            <div class="project-card" onclick="openSimulator('determine_alkainity_of_water_F')">
+                <div class="card-icon">🌊</div>
+                <h3>Water Alkalinity</h3>
+                <p>Determination of phenolphthalein and total alkalinity in water samples using acid titration.</p>
+                <span class="btn-launch">Launch Experiment</span>
+            </div>
+
+            <!-- Experiment 4: Chloride -->
+            <div class="project-card" onclick="openSimulator('Chloride_Determination_F')">
+                <div class="card-icon">🧪</div>
+                <h3>Chloride Content</h3>
+                <p>Mohr's method for determination of chloride content in water using AgNO₃ titration.</p>
+                <span class="btn-launch">Launch Experiment</span>
+            </div>
+
+            <!-- Experiment 5: pH Titration -->
+            <div class="project-card" onclick="openSimulator('determine_dissociation_constant_F')">
+                <div class="card-icon">📈</div>
+                <h3>pH Titration & Ka</h3>
+                <p>Weak acid vs strong base titration to determine dissociation constant (Ka) from pH curve.</p>
+                <span class="btn-launch">Launch Experiment</span>
+            </div>
+
+            <!-- Experiment 6: Conductivity -->
+            <div class="project-card" onclick="openSimulator('conducitivity_meter_F')">
+                <div class="card-icon">📊</div>
+                <h3>Conductometric Titration</h3>
+                <p>Strong Acid vs Strong Base titration using conductivity measurements to determine endpoint.</p>
+                <span class="btn-launch">Launch Experiment</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. POPUP MODAL -->
+    <div id="simulator-modal">
+        <div class="modal-content">
+            <div class="close-btn" onclick="closeSimulator()">&times;</div>
+            <!-- The simulator loads here -->
+            <iframe id="sim-frame"></iframe>
+        </div>
+    </div>
+
+    <!-- HIDDEN STORAGE FOR ALL 6 EXPERIMENTS -->
+    <!-- We'll use direct URL loading instead of textareas for performance -->
+    
+<script>
+    // ================= MAIN PORTAL LOGIC =================
+    window.onload = function() {
+        if(localStorage.getItem("isLoggedIn") === "true") {
+            showDashboard();
+        }
+    }
+
+    function attemptLogin() {
+        const id = document.getElementById("userid").value;
+        const pass = document.getElementById("password").value;
+        const error = document.getElementById("error-msg");
+
+        // LOGIN CREDENTIALS
+        if (id === "admin" && pass === "chemistry") {
+            localStorage.setItem("isLoggedIn", "true");
+            showDashboard();
+        }if (id === "125B1F134" && pass === "125B1F134") {
+            localStorage.setItem("isLoggedIn", "true");
+            showDashboard();
+        }if (id === "125B1F143" && pass === "125B1F143") {
+            localStorage.setItem("isLoggedIn", "true");
+            showDashboard();
+        }if (id === "125B1F144" && pass === "125B1F144") {
+            localStorage.setItem("isLoggedIn", "true");
+            showDashboard();
+        }if (id === "125B1F146" && pass === "125B1F146") {
+            localStorage.setItem("isLoggedIn", "true");
+            showDashboard();
+        } else {
+            error.style.display = "block";
+        }
+    }
+
+    function showDashboard() {
+        document.getElementById("login-screen").style.opacity = "0";
+        setTimeout(() => {
+            document.getElementById("login-screen").style.display = "none";
+            document.getElementById("dashboard").style.display = "flex";
+        }, 500);
+    }
+
+    function logout() {
+        localStorage.removeItem("isLoggedIn");
+        location.reload();
+    }
+
+    // ================= SIMULATOR LOADING LOGIC =================
+    function openSimulator(simId) {
+        const modal = document.getElementById("simulator-modal");
+        const frame = document.getElementById("sim-frame");
+        
+        // Array of simulator URLs 
+        const simulators = {
+            'safty_in_eng_chemisrty_lab': 'safty_in_eng_chemisrty_lab.html',
+            'EDTA_chem_LAB_F': 'EDTA_chem_LAB_F.html',
+            'determine_alkainity_of_water_F': 'determine_alkainity_of_water_F.html',
+            'Chloride_Determination_F': 'Chloride_Determination_F.html',
+            'determine_dissociation_constant_F': 'determine_dissociation_constant_F.html',
+            'conducitivity_meter_F': 'conducitivity_meter_F.html',
+        };
+        
+        // Load the simulator
+        frame.src = simulators[simId] || simId + '.html';
+        
+        modal.style.display = "flex";
+    }
+
+    function closeSimulator() {
+        const modal = document.getElementById("simulator-modal");
+        const frame = document.getElementById("sim-frame");
+        
+        modal.style.display = "none";
+        frame.src = ""; // Clear to stop simulation
+    }
+
+    // Keyboard shortcut for closing modal with Escape key
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            closeSimulator();
+        }
+    });
+
+    // Close modal when clicking outside
+    document.getElementById('simulator-modal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeSimulator();
+        }
+    });
+
+</script>
+
+</body>
+</html>

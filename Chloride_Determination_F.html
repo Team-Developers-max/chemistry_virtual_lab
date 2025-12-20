@@ -1,0 +1,556 @@
+ 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chloride Content Lab Simulator (Flat Design)</title>
+    
+    <style>
+        /* --- 1. General Layout --- */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f4f6f8;
+            color: #333;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .main-content {
+            display: flex;
+            gap: 30px;
+            max-width: 1300px;
+            width: 100%;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .lab-container {
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            padding: 40px;
+            text-align: center;
+            flex: 2;
+            min-width: 600px;
+        }
+
+        h1 { color: #00796b; margin-bottom: 30px; }
+
+        /* --- Reagent Boxes --- */
+        .reagent-boxes {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+
+        .reagent-box {
+            background-color: #546e7a;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.2s;
+            user-select: none;
+            font-size: 0.9em;
+        }
+
+        .reagent-box:hover { background-color: #37474f; transform: translateY(-2px); }
+
+        /* --- APPARATUS SECTION (Flat Design) --- */
+        .apparatus-container {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            margin-bottom: 50px;
+            height: 550px; 
+            position: relative;
+            width: 100%;
+        }
+
+        /* 1. The Stand */
+        .stand-base {
+            position: absolute;
+            bottom: 0;
+            left: 25%;
+            width: 120px;
+            height: 12px;
+            background-color: #333;
+            border-radius: 4px;
+            z-index: 2;
+        }
+
+        .stand-rod {
+            position: absolute;
+            bottom: 12px;
+            left: 28%;
+            width: 10px;
+            height: 530px;
+            background-color: #333;
+            z-index: 1;
+        }
+
+        .stand-clamp {
+            position: absolute;
+            top: 80px;
+            left: 28%;
+            width: 90px;
+            height: 10px;
+            background-color: #333;
+            z-index: 1;
+        }
+
+        /* 2. The Burette */
+        .burette-group {
+            position: absolute;
+            top: 40px;
+            left: calc(28% + 80px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 5;
+        }
+
+        .burette-body {
+            width: 36px;
+            height: 300px;
+            border: 2px solid #333;
+            background-color: #fff;
+            position: relative;
+            border-radius: 2px;
+        }
+
+        .burette-liquid {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 0%;
+            background-color: #e3f2fd; /* Pale Blue for AgNO3 */
+            transition: height 0.5s ease-out;
+            z-index: 1;
+        }
+
+        /* Tick Marks */
+        .burette-ticks {
+            position: absolute;
+            top: 10px;
+            right: 0;
+            width: 100%;
+            height: 280px;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+        .tick { width: 8px; height: 1px; background-color: #555; }
+        .tick.long { width: 15px; }
+
+        /* Stopcock */
+        .stopcock {
+            width: 18px;
+            height: 12px;
+            background-color: #333;
+            margin-top: -2px;
+            position: relative;
+            z-index: 6;
+        }
+        .stopcock::after {
+            content: '';
+            position: absolute;
+            top: 100%; left: 50%; transform: translateX(-50%);
+            width: 4px; height: 8px; background-color: #333;
+        }
+
+        /* 3. The Beaker */
+        .beaker-container {
+            position: absolute;
+            bottom: 12px;
+            left: calc(28% + 30px);
+            z-index: 10;
+        }
+
+        .beaker {
+            width: 140px;
+            height: 150px;
+            border: 2px solid #333;
+            border-top: none;
+            border-radius: 0 0 20px 20px;
+            position: relative;
+            overflow: hidden;
+            background-color: rgba(255,255,255,0.95);
+        }
+
+        .beaker-liquid {
+            width: 100%;
+            height: 0%;
+            background-color: transparent;
+            position: absolute;
+            bottom: 0;
+            transition: height 0.1s linear, background-color 0.5s ease-out;
+        }
+
+        /* Color classes for Mohr's Method */
+        .color-yellow { background-color: #ffc107 !important; } /* Chromate Indicator */
+        .color-white-turbid { background-color: #f5f5f5 !important; } /* AgCl Precipitate */
+        .color-reddish-brown { background-color: #96310f !important; } /* Endpoint Ag2CrO4 */
+
+        /* 4. Drop Animation */
+        .drop {
+            position: absolute;
+            top: 365px;
+            left: calc(28% + 98px);
+            transform: translateX(-50%);
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background-color: #90caf9; /* AgNO3 drop */
+            opacity: 0;
+            z-index: 8;
+        }
+        .drop.animate { animation: fall 0.3s linear forwards; }
+        @keyframes fall { 
+            0% { transform: translate(-50%, 0); opacity: 1; } 
+            100% { transform: translate(-50%, 120px); opacity: 0; } 
+        }
+
+        /* --- Inputs & UI --- */
+        .input-section { margin-top: 20px; padding: 20px; background: #fafafa; border-radius: 8px; text-align: left; border: 1px solid #eee; display: inline-block; width: 90%; }
+        .input-section label { display: block; margin-top: 10px; font-weight: bold; color: #555; }
+        .input-section input { padding: 8px; width: 200px; margin: 5px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        .input-section button { background-color: #00796b; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; margin-top: 15px; font-weight: bold; }
+        .input-section button:hover { background-color: #004d40; }
+        
+        .titration-controls { margin: 20px 0; padding: 15px; background-color: #e0f2f1; border-left: 4px solid #00796b; border-radius: 4px; }
+        .titration-controls h3 { margin-top: 0; color: #004d40; }
+        .titration-controls p { font-size: 0.9em; color: #666; margin-bottom: 10px; }
+
+        .results-section { margin-top: 30px; padding: 20px; background: #f7f9fb; border-radius: 8px; text-align: left; border: 1px solid #e0e0e0; display: inline-block; width: 90%; }
+        .results-section h2 { margin-top: 0; color: #00796b; border-bottom: 1px dashed #ccc; padding-bottom: 10px; }
+        .results-section p { font-size: 1.1em; }
+        .results-section span { font-weight: bold; color: #d81b60; }
+
+        .instruction-box { flex: 1; background: #fff3e0; padding: 25px; border-radius: 12px; text-align: left; height: fit-content; border: 1px solid #ffe0b2; min-width: 280px; }
+        .instruction-box h2 { margin-top: 0; color: #e65100; }
+
+        #notification-area { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 10px 20px; border-radius: 4px; display: none; z-index: 100; font-weight: bold; }
+        
+        #reset-button { background-color: #e53935; }
+        #reset-button:hover { background-color: #c62828; }
+        #titrate-sample-button, #titrate-blank-button { background-color: #1976d2; }
+        #titrate-sample-button:hover, #titrate-blank-button:hover { background-color: #1565c0; }
+    </style>
+</head>
+<body>
+    <div class="main-content">
+        <div id="notification-area"></div>
+        <div class="lab-container">
+            <h1>Determination of Chloride Content (Mohr's Method)</h1>
+
+            <div class="reagent-boxes">
+                <div class="reagent-box" id="agno3-reagent">AgNO₃ (Burette)</div>
+                <div class="reagent-box" id="water-sample-reagent">Water Sample(Back)</div>
+                <div class="reagent-box" id="k2cro4-reagent">K₂CrO₄ Indicator</div>
+                <div class="reagent-box" id="distilled-water-reagent">Distilled Water (Blank)</div>
+            </div>
+
+            <div class="apparatus-container">
+                <div class="stand-base"></div>
+                <div class="stand-rod"></div>
+                <div class="stand-clamp"></div>
+
+                <div class="burette-group">
+                    <div class="burette-body">
+                        <div class="burette-liquid" id="burette-liquid"></div>
+                        <div class="burette-ticks">
+                            <div class="tick long"></div><div class="tick"></div><div class="tick"></div><div class="tick"></div>
+                            <div class="tick long"></div><div class="tick"></div><div class="tick"></div><div class="tick"></div>
+                            <div class="tick long"></div><div class="tick"></div><div class="tick"></div><div class="tick"></div>
+                            <div class="tick long"></div><div class="tick"></div><div class="tick"></div><div class="tick"></div>
+                            <div class="tick long"></div><div class="tick"></div><div class="tick"></div>
+                        </div>
+                    </div>
+                    <div class="stopcock"></div>
+                </div>
+
+                <div id="titration-drop" class="drop"></div>
+
+                <div class="beaker-container">
+                    <div class="beaker">
+                        <div class="beaker-liquid" id="beaker-liquid"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="input-section">
+                <h2>Titration Data Input</h2>
+                <label>Water Sample Volume (mL):</label>
+                <input type="number" id="sample-volume" value="50">
+                <label>Standard AgNO₃ Normality (N):</label>
+                <input type="number" id="agno3-normality" value="0.02" step="0.001">
+
+                <div class="titration-controls">
+                    <h3>Sample Titration(Back) (V1)</h3>
+                    <p>Titrate until reddish-brown precipitate appears.</p>
+                    <button id="titrate-sample-button">Start Sample Titration(Back)</button>
+                    <label>Concordant Volume (V1, mL):</label>
+                    <input type="number" id="sample-titrated-volume" placeholder="0.0" step="0.1">
+                </div>
+
+                <div class="titration-controls">
+                    <h3>Blank Titration (V2)</h3>
+                    <p>Titrate distilled water for indicator correction.</p>
+                    <button id="titrate-blank-button">Start Blank Titration</button>
+                    <label>Concordant Volume (V2, mL):</label>
+                    <input type="number" id="blank-titrated-volume" placeholder="0.0" step="0.1">
+                </div>
+
+                <button id="calculate-chloride">Calculate Chloride Content</button>
+                <button id="reset-button" style="margin-left: 10px;">Reset Simulation</button>
+            </div>
+
+            <div class="results-section">
+                <h2>Results</h2>
+                <p>Net AgNO₃ Volume (V): <span id="net-volume-display">---</span> mL</p>
+                <p>Chloride Content: <span id="chloride-content-mg-l">---</span> ppm</p>
+            </div>
+        </div>
+
+        <div class="instruction-box">
+            <h2>Instructions</h2>
+            <p id="current-instruction">Start by filling the burette with Standard AgNO₃ solution.</p>
+        </div>
+    </div>
+
+    <script>
+        /* --- JAVASCRIPT LOGIC (Mohr's Method) --- */
+        
+        const buretteLiquid = document.getElementById("burette-liquid");
+        const beakerLiquid = document.getElementById("beaker-liquid");
+        const titrationDrop = document.getElementById("titration-drop");
+
+        const agno3Reagent = document.getElementById("agno3-reagent");
+        const waterSampleReagent = document.getElementById("water-sample-reagent");
+        const k2cro4Reagent = document.getElementById("k2cro4-reagent");
+        const distilledWaterReagent = document.getElementById("distilled-water-reagent");
+
+        const sampleVolumeInput = document.getElementById("sample-volume");
+        const agno3NormalityInput = document.getElementById("agno3-normality");
+        const sampleTitratedVolumeInput = document.getElementById("sample-titrated-volume");
+        const blankTitratedVolumeInput = document.getElementById("blank-titrated-volume");
+        
+        const calculateChlorideButton = document.getElementById("calculate-chloride");
+        const titrateSampleButton = document.getElementById("titrate-sample-button");
+        const titrateBlankButton = document.getElementById("titrate-blank-button");
+        const resetButton = document.getElementById("reset-button");
+
+        const netVolumeDisplay = document.getElementById("net-volume-display");
+        const chlorideContentDisplay = document.getElementById("chloride-content-mg-l");
+        const currentInstructionDisplay = document.getElementById("current-instruction");
+        const notificationArea = document.getElementById("notification-area");
+
+        let titrationActive = false;
+        let agno3AddedVolume = 0.0;
+        let endpointReached = false;
+        let currentTitrationType = "sample"; 
+        let beakerHasSample = false;
+        let beakerHasIndicator = false;
+        let beakerHasDistilledWater = false;
+        let titrationTimer = null;
+
+        const SIMULATED_ENDPOINT_VOLUME = { sample: 11.2, blank: 1.1 };
+        const CHLORIDE_EQUIVALENT_WEIGHT = 35.45; 
+
+        function showNotification(message, isError = false) {
+            notificationArea.textContent = message;
+            notificationArea.style.display = 'block';
+            notificationArea.style.backgroundColor = isError ? '#f44336' : '#2e7d32';
+            setTimeout(() => { notificationArea.style.display = 'none'; }, 3000);
+        }
+
+        function updateInstructions(message) {
+            currentInstructionDisplay.textContent = message;
+        }
+
+        function resetSimulation() {
+            titrationActive = false; agno3AddedVolume = 0.0; endpointReached = false;
+            beakerHasSample = false; beakerHasIndicator = false; beakerHasDistilledWater = false;
+            if (titrationTimer) { clearTimeout(titrationTimer); titrationTimer = null; }
+
+            buretteLiquid.style.height = "0%";
+            beakerLiquid.style.height = "0%";
+            beakerLiquid.style.backgroundColor = "transparent";
+            beakerLiquid.className = "beaker-liquid"; // Remove color classes
+            titrationDrop.classList.remove('animate');
+
+            netVolumeDisplay.textContent = "---";
+            chlorideContentDisplay.textContent = "---";
+            sampleTitratedVolumeInput.value = "";
+            blankTitratedVolumeInput.value = "";
+
+            updateInstructions("Start by filling the burette with Standard AgNO₃ solution.");
+            showNotification("Simulation reset!");
+        }
+
+        function clearBeakerState() {
+            beakerHasSample = false; beakerHasIndicator = false; beakerHasDistilledWater = false;
+            beakerLiquid.style.height = "0%"; 
+            beakerLiquid.style.backgroundColor = "transparent";
+            beakerLiquid.className = "beaker-liquid";
+        }
+
+        function fillBuretteWithAgno3() {
+            buretteLiquid.style.height = "90%";
+            updateInstructions("Burette filled with Standard AgNO₃. Now prepare the flask.");
+        }
+
+        function addWaterSampleToBeaker() {
+            clearBeakerState();
+            beakerLiquid.style.height = "25%";
+            beakerLiquid.style.backgroundColor = "#e0f2f7"; 
+            beakerHasSample = true;
+            updateInstructions("Water Sample added. Now add K₂CrO₄ Indicator.");
+        }
+
+        function addDistilledWaterToBeaker() {
+            clearBeakerState();
+            beakerLiquid.style.height = "25%";
+            beakerLiquid.style.backgroundColor = "#e0f2f7"; 
+            beakerHasDistilledWater = true;
+            updateInstructions("Distilled Water (Blank) added. Now add K₂CrO₄ Indicator.");
+        }
+
+        function addK2Cro4ToBeaker() {
+            if (!beakerHasSample && !beakerHasDistilledWater) {
+                showNotification("Add Water Sample or Distilled Water first!", true); return;
+            }
+            let currentHeight = parseFloat(beakerLiquid.style.height.replace('%', ''));
+            beakerLiquid.style.height = `${Math.min(currentHeight + 5, 70)}%`;
+            beakerLiquid.classList.add('color-yellow'); // Yellow Indicator
+            beakerHasIndicator = true;
+            updateInstructions("Indicator added (Yellow). Start titration!");
+        }
+
+        function triggerDropAnimation() {
+            titrationDrop.style.opacity = 0;
+            titrationDrop.classList.remove('animate');
+            void titrationDrop.offsetWidth;
+            titrationDrop.classList.add('animate');
+        }
+
+        function updateBeakerColor(currentVolume, targetVolume) {
+            // Apply yellow if starting
+            if (!beakerLiquid.classList.contains('color-white-turbid') && !beakerLiquid.classList.contains('color-reddish-brown')) {
+                 beakerLiquid.classList.add('color-yellow');
+            }
+            // AgCl Precipitation (White Turbid)
+            if (currentVolume > targetVolume * 0.2) {
+                beakerLiquid.classList.add('color-white-turbid');
+                beakerLiquid.classList.remove('color-yellow'); 
+            }
+            // Endpoint (Reddish Brown)
+            if (currentVolume >= targetVolume) {
+                beakerLiquid.classList.remove('color-white-turbid');
+                beakerLiquid.classList.add('color-reddish-brown');
+            }
+        }
+
+        function titrateStep() {
+            if (!titrationActive) return;
+            let h = parseFloat(buretteLiquid.style.height.replace('%', ''));
+            if (h <= 5) { showNotification("Burette is empty!", true); titrationActive = false; return; }
+
+            triggerDropAnimation();
+            const dropVolume = 0.1;
+            buretteLiquid.style.height = `${h - 0.5}%`;
+            
+            let bh = parseFloat(beakerLiquid.style.height.replace('%', ''));
+            beakerLiquid.style.height = `${Math.min(bh + 0.05, 70)}%`;
+            
+            agno3AddedVolume += dropVolume;
+            const targetVolume = SIMULATED_ENDPOINT_VOLUME[currentTitrationType];
+            
+            updateBeakerColor(agno3AddedVolume, targetVolume);
+
+            if (agno3AddedVolume >= targetVolume && !endpointReached) {
+                endpointReached = true; titrationActive = false;
+                const finalVolume = agno3AddedVolume.toFixed(1);
+                showNotification(`Endpoint reached! Volume: ${finalVolume} mL`);
+                
+                if (currentTitrationType === "sample") {
+                    sampleTitratedVolumeInput.value = finalVolume;
+                    updateInstructions(`Sample Titration Complete (V1: ${finalVolume} mL). Perform Blank Titration.`);
+                } else if (currentTitrationType === "blank") {
+                    blankTitratedVolumeInput.value = finalVolume;
+                    updateInstructions(`Blank Titration Complete (V2: ${finalVolume} mL). Calculate Chloride.`);
+                }
+                return;
+            }
+            titrationTimer = setTimeout(titrateStep, 100);
+        }
+
+        function startTitration(titrationType) {
+            if (buretteLiquid.style.height === "0%") { showNotification("Fill burette first!", true); return; }
+            
+            clearBeakerState();
+            if (titrationType === 'sample') {
+                addWaterSampleToBeaker();
+                setTimeout(addK2Cro4ToBeaker, 100);
+                setTimeout(() => runTitrationSteps(titrationType), 200);
+            } else if (titrationType === 'blank') {
+                addDistilledWaterToBeaker();
+                setTimeout(addK2Cro4ToBeaker, 100);
+                setTimeout(() => runTitrationSteps(titrationType), 200);
+            }
+        }
+
+        function runTitrationSteps(titrationType) {
+            currentTitrationType = titrationType; titrationActive = true; endpointReached = false; agno3AddedVolume = 0.0;
+            updateInstructions(`Titrating ${titrationType}...`);
+            beakerLiquid.className = "beaker-liquid color-yellow"; // Reset color
+            titrateStep();
+        }
+
+        function calculateChlorideContent() {
+            const N = parseFloat(agno3NormalityInput.value);
+            const V1 = parseFloat(sampleTitratedVolumeInput.value);
+            const V2 = parseFloat(blankTitratedVolumeInput.value);
+            const SV = parseFloat(sampleVolumeInput.value);
+
+            if (isNaN(N) || isNaN(V1) || isNaN(V2) || SV === 0) {
+                showNotification("Please ensure all inputs (V1, V2) are valid.", true); return;
+            }
+
+            const V_net = V1 - V2;
+            netVolumeDisplay.textContent = V_net.toFixed(2);
+
+            if (V_net < 0) { showNotification("Net volume cannot be negative.", true); return; }
+            
+            const result = (V_net * N * CHLORIDE_EQUIVALENT_WEIGHT * 1000) / SV;
+            chlorideContentDisplay.textContent = result.toFixed(2);
+            showNotification(`Calculation successful: ${result.toFixed(2)} ppm`);
+        }
+
+        agno3Reagent.onclick = fillBuretteWithAgno3;
+        waterSampleReagent.onclick = addWaterSampleToBeaker;
+        k2cro4Reagent.onclick = addK2Cro4ToBeaker;
+        distilledWaterReagent.onclick = addDistilledWaterToBeaker;
+
+        titrateSampleButton.onclick = () => startTitration("sample");
+        titrateBlankButton.onclick = () => startTitration("blank");
+        calculateChlorideButton.onclick = calculateChlorideContent;
+        resetButton.onclick = resetSimulation;
+
+        resetSimulation();
+    </script>
+</body>
+</html>
+```
