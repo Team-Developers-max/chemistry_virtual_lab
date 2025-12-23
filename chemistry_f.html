@@ -248,11 +248,11 @@
             <h2>⚗️ Chemistry Lab Access</h2>
             <div class="input-group">
                 <label>Student ID</label>
-                <input type="text" id="userid" placeholder="Enter: admin">
+                <input type="text" id="userid" placeholder="Enter: user">
             </div>
             <div class="input-group">
                 <label>Password</label>
-                <input type="password" id="password" placeholder="Enter: chemistry">
+                <input type="password" id="password" placeholder="Enter: 123456">
             </div>
             <button class="login-btn" onclick="attemptLogin()">ENTER LAB</button>
             <p class="error-msg" id="error-msg">❌ Invalid ID or Password!</p>
@@ -347,7 +347,7 @@
         const error = document.getElementById("error-msg");
 
         // LOGIN CREDENTIALS
-        if (id === "admin" && pass === "chemistry") {
+        if (id === "user" && pass === "123456") {
             localStorage.setItem("isLoggedIn", "true");
             showDashboard();
         }if (id === "125B1F134" && pass === "125B1F134") {
@@ -426,4 +426,5 @@
 </script>
 
 </body>
+
 </html>
